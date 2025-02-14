@@ -1,0 +1,2 @@
+load_osql(models:folder("fuel_efficiency") + "inference.osql");
+load_osql(models:folder("fuel_efficiency") + "weights.osql");

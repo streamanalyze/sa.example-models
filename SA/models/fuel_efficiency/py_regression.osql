@@ -1,0 +1,20 @@
+create function py:describe(pythonproxy tf_model, boolean weights) -> charstring
+as foreign 'py:fuel_efficiency.py_regression.get_model_summary';
+
+create function py:infer(pythonproxy tf_model, array data) -> array
+as foreign 'py:fuel_efficiency.py_regression.infer';
+
+create function py:get_weights(pythonproxy tf_model, charstring layer_name) -> array of f32
+as foreign 'py:fuel_efficiency.py_regression.get_weights';
+
+create function py:get_bias(pythonproxy tf_model, charstring layer_name) -> array of f32
+as foreign 'py:fuel_efficiency.py_regression.get_bias';
+
+create function py:train_one_var_model(array data, array labels) -> pythonproxy
+as foreign 'py:fuel_efficiency.py_regression.train_one_var_model';
+
+create function py:train_multi_var_model(array data, array labels) -> pythonproxy
+as foreign 'py:fuel_efficiency.py_regression.train_multi_var_model';
+
+create function py:train_dnn_model(array data, array labels) -> pythonproxy
+as foreign 'py:fuel_efficiency.py_regression.train_dnn_model';

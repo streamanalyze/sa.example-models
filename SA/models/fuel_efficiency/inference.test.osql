@@ -1,0 +1,21 @@
+load_osql(models:folder('fuel_efficiency') + 'inference.osql');
+
+validate "max of"
+check max_of(array("f32",[1,2,3,4,5,6]),3) => array("f32",[3,3,3,4,5,6]);
+
+validate "normalize" 
+check normalize(array("f32",[5]),
+          array("f32",[1]),
+          array("f32",[1])) => array("f32",[4])
+check normalize(array("f32",[5]),
+          array("f32",[1]),
+          array("f32",[0])) => array("f32",[400])
+check normalize(array("f32",[5,500,50000]),
+          array("f32",[1,100,10000]),
+          array("f32",[1,10000,100000000])) => array("f32",[4,4,4]);
+
+validate "linear regression"
+check linear_regression(array("f32", [0]), array("f32", [1]),
+                        array("f32", [[1.2]]), array("f32", [5]),
+                        array("f32", [2])) => array("f32", [7.4]);
+

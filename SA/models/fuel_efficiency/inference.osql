@@ -1,0 +1,50 @@
+system_models:load("nn");
+
+/* *********** Normalization implementation ************* */
+
+create function max_of(Array of F32 x, Real scalar) -> Array of F32
+/* Max of each element and a scalar */
+  as select out
+       from Array out, Integer i
+      where _assign(out, new_array_from_template(x))
+        and _do(setf(out,i,max(x[i], scalar)));
+
+create function normalize(Array of f32 data, 
+                          Array of f32 mean, 
+                          Array of f32 variance,
+                          Real epsilon) -> array of f32
+/* Normalizes data from given means and variances for each value. Uses epsilon to avoid divide by zero */
+as (data - mean) ./ sqrt(max_of(variance,epsilon));
+
+create function normalize(Array of f32 data, 
+                          Array of f32 mean, 
+                          Array of f32 variance) -> array of f32
+/* Normalizes data from given means and variances for each value. Uses epsilon 0.0001 */
+as normalize(data,mean,variance,0.0001);
+
+/* *********** Inference examples ************* */
+
+create function linear_regression(
+    Array of f32 norm_weights, Array of f32 norm_bias, 
+    Array of f32 dense_weights, Array of f32 dense_bias, 
+    Array of f32 data) -> Array of f32
+/* Inference of linear regression with normalization, using given weights */
+as select out 
+    from Array of f32 out, Array of f32 normalized
+    where normalized = normalize(data, norm_weights, norm_bias)
+    and out = dense(normalized, dense_weights, dense_bias, #'identity');
+
+create function my_dnn(
+    Array of f32 norm_weights, Array of f32 norm_bias, 
+    Array of f32 dense_weights, Array of f32 dense_bias,
+    Array of f32 dense_1_weights, Array of f32 dense_1_bias,
+    Array of f32 dense_2_weights, Array of f32 dense_2_bias, 
+    Array of f32 data) -> Array of f32
+/* A deep neural network with 3 dense layer and normalization */
+as select out 
+    from Array of f32 out, Array of f32 normalized, 
+    Array of f32 densed, Array of f32 densed_1
+    where normalized = normalize(data, norm_weights, norm_bias)
+    and densed = relu(dense(normalized, dense_weights, dense_bias, #'identity'))
+    and densed_1 = relu(dense(densed, dense_1_weights, dense_1_bias, #'identity'))
+    and out = dense(densed_1, dense_2_weights, dense_2_bias, #'identity');

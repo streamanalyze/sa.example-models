@@ -1,0 +1,34 @@
+load_osql(models:folder("fuel_efficiency") + "weights.osql");
+
+w("Horsepower", "normalization", array("F32",[104.869446]));
+w("Horsepower", "normalization_bias", array("F32",[1446.6993]));
+w("Horsepower", "dense", array("F32",[[-6.360543]]));
+w("Horsepower", "dense_bias", array("F32",[22.58268]));
+
+validate "Horsepower weights populated"
+check get_model('Horsepower') => bag(['dense_bias',ARRAY('f32', [22.582679748535156])],
+['dense',ARRAY('f32', [[-6.3605427742004395]])],
+['normalization_bias',ARRAY('f32', [1446.6993408203125])],
+['normalization',ARRAY('f32', [104.86944580078125])]);
+
+export_weights("Horsepower");
+
+delete from Weight;
+
+validate "Horsepower weights empty"
+check get_model('Horsepower') => null;
+
+import_weights('Horsepower');
+
+validate "Horsepower weights re-populated"
+check get_model('Horsepower') => bag(
+['dense_bias',ARRAY('f32', [22.582679748535156])],
+['dense',ARRAY('f32', [[-6.3605427742004395]])],
+['normalization_bias',ARRAY('f32', [1446.6993408203125])],
+['normalization',ARRAY('f32', [104.86944580078125])]);
+
+validate "Get weights"
+check w("Horsepower", "normalization") => array("F32",[104.869446])
+check w("Horsepower", "normalization_bias") => array("F32",[1446.6993])
+check w("Horsepower", "dense") => array("F32",[[-6.360543]])
+check w("Horsepower", "dense_bias") => array("F32",[22.58268]);

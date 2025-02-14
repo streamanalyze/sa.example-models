@@ -1,0 +1,21 @@
+load_osql(models:folder("fuel_efficiency") + "dataset.osql");
+
+validate "Read horsepower features with python"
+check dataset:horsepower_features()[1] => 75
+check length(dataset:horsepower_features(),1) => 314
+check dataset:horsepower_test_features()[1] => 190
+check length(dataset:horsepower_test_features(),1) => 78;
+
+validate "Read mpg features with python"
+check dataset:mpg_labels()[1] => 28
+check length(dataset:mpg_labels(),1) => 314
+check dataset:test_labels()[1] => 15.0
+check length(dataset:test_labels(),1) => 78;
+
+validate "Read all features with python"
+check dataset:all_features()[1,*] => array("f32",[4, 90, 75, 2125, 14.5, 74, 0, 0, 1])
+check length(dataset:all_features(),1) => 314
+check dataset:all_test_features()[1,*] => array("f32",[8, 390, 190, 3850, 8.5, 70, 0, 0, 1])
+check length(dataset:all_test_features(),1) => 78;
+
+

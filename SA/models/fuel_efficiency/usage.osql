@@ -1,0 +1,131 @@
+// Load this model
+models:load('fuel_efficiency');
+
+// Load python wrappers in this model, these are not loaded in master
+load_osql(models:folder("fuel_efficiency") + "dataset.osql");
+load_osql(models:folder("fuel_efficiency") + "py_regression.osql");
+
+// create and train one variable linear regression model in tensorflow
+set :horsepower_lin_reg = py:train_one_var_model(
+    dataset:horsepower_features(),
+    dataset:mpg_labels()
+);
+
+// look at the weights in the tensorflow model
+py:describe(:horsepower_lin_reg, true);
+
+// linear_regression in inference.osql is an equal implementation in OSQL
+// for this small example, we can manually transfer the weights
+linear_regression(
+    array("f32", [104.869446]), array("f32", [1446.6993]), 
+    array("f32", [[-6.360543]]), array("f32", [22.58268]),  
+    array("f32", [dataset:horsepower_test_features()[1]])
+);
+
+// compare with inference in python 
+// (note the result may slightly differ if weights are not re-transfered)
+py:infer(
+    :horsepower_lin_reg, 
+    array("f32", [dataset:horsepower_test_features()[1]])
+);
+
+// create and train a multi variable linear regression model
+set :multi_lin_reg = py:train_multi_var_model(
+    dataset:all_features(),
+    dataset:mpg_labels()
+);
+
+// look at the weights
+py:describe(:multi_lin_reg, true);
+
+// transfer the weights using functions
+set :norm_weights = py:get_weights(:multi_lin_reg, 'normalization');
+set :norm_bias = py:get_bias(:multi_lin_reg, 'normalization');
+
+// dense weights in tf are format [channels, units],
+// need to be transposed for the OSQL dense function
+// which takes [units, channels]
+_doc(functionnamed("dense_w_trans"));
+
+set :dense_weights = dense_w_trans(py:get_weights(:multi_lin_reg, 'dense'));
+set :dense_bias = py:get_bias(:multi_lin_reg, 'dense');
+
+// use the weights to infer with the OSQL model
+linear_regression(
+    :norm_weights, :norm_bias, 
+    :dense_weights, :dense_bias,  
+    array("f32", dataset:all_test_features()[1,*])
+);
+
+// compare with inference in python
+py:infer(
+    :multi_lin_reg, 
+    array("f32", dataset:all_test_features()[1,*])
+);
+
+// Now, lets create a larger DNN model with relu activation
+set :dnn = py:train_dnn_model(
+    dataset:all_features(),
+    dataset:mpg_labels()
+);
+
+// look at the summary, and notice layer names
+py:describe(:dnn,false);
+
+// transfer the weights to an SQL table, as defined in weights.osql
+w("DNN", "normalization", py:get_weights(:dnn, 'normalization'));
+w("DNN", "normalization_bias",py:get_bias(:dnn, 'normalization'));
+
+w("DNN", "dense", dense_w_trans(py:get_weights(:dnn, 'dense')));
+w("DNN", "dense_bias", py:get_bias(:dnn, 'dense'));
+
+w("DNN", "dense_1", dense_w_trans(py:get_weights(:dnn, 'dense_1')));
+w("DNN", "dense_1_bias", py:get_bias(:dnn, 'dense_1'));
+
+w("DNN", "dense_2", dense_w_trans(py:get_weights(:dnn, 'dense_2')));
+w("DNN", "dense_2_bias", py:get_bias(:dnn, 'dense_2'));
+
+// Use my_dnn, the implementation in inference.osql, to infer with OSQL
+my_dnn(
+    w("DNN", "normalization"), w("DNN", "normalization_bias"), 
+    w("DNN", "dense"), w("DNN", "dense_bias"), 
+    w("DNN", "dense_1"), w("DNN", "dense_1_bias"), 
+    w("DNN", "dense_2"), w("DNN", "dense_2_bias"),  
+    array("f32", dataset:all_test_features()[1,*])
+);
+
+// compare with inference in python
+py:infer(
+    :dnn, 
+    array("f32", dataset:all_test_features()[1,*])
+);
+
+// Now, we want to deploy the DNN model and infer it on an edge without python
+
+// Save the weights in a file that will be sent to the edge
+export_weights("DNN");
+
+// Connect to the edge, eg. here we connect as client to a federation with an edge
+federation:save("sandbox", "<blob>");
+
+federation:connect("sandbox","client",true,false);
+
+// Ensure the edge is present
+listening_edges();
+
+// Note: the edge must have at least 6.0.3 to run the inference
+models:deploy(["win-edge"], "fuel_efficiency");
+
+// Load the weights into the SQL table on the edge
+// peer: win-edge
+import_weights("DNN");
+
+// inference on the edge
+// peer: win-edge
+my_dnn(
+    w("DNN", "normalization"), w("DNN", "normalization_bias"), 
+    w("DNN", "dense"), w("DNN", "dense_bias"), 
+    w("DNN", "dense_1"), w("DNN", "dense_1_bias"), 
+    w("DNN", "dense_2"), w("DNN", "dense_2_bias"),  
+    ARRAY('f32', [8, 390, 190, 3850, 8.5, 70, 0, 0, 1])
+);

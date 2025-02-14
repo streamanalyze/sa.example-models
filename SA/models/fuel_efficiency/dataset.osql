@@ -1,0 +1,17 @@
+create function dataset:horsepower_features() -> array
+as foreign 'py:fuel_efficiency.dataset.get_horsepower_features';
+
+create function dataset:all_features() -> array
+as foreign 'py:fuel_efficiency.dataset.get_all_features';
+
+create function dataset:mpg_labels() -> array
+as foreign 'py:fuel_efficiency.dataset.get_mpg_labels';
+
+create function dataset:horsepower_test_features() -> array
+as foreign 'py:fuel_efficiency.dataset.get_horsepower_test_features';
+
+create function dataset:all_test_features() -> array
+as foreign 'py:fuel_efficiency.dataset.get_all_test_features';
+
+create function dataset:test_labels() -> array
+as foreign 'py:fuel_efficiency.dataset.get_test_labels';

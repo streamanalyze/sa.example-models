@@ -1,0 +1,25 @@
+create table Weight(model Charstring, 
+                    layer Charstring, 
+                    value Array of F32, 
+                    unique(model, layer));
+
+create_folder(models:folder("fuel_efficiency") + "weights");
+
+create function get_model(Charstring name) -> Bag of Vector
+as select [w.layer, w.value] from Weight w where w.model = name;
+
+create function export_weights(Charstring name) -> Boolean
+as csv:write_file(models:folder('fuel_efficiency') + 'weights/' + name + '.csv',
+(select [w.layer, json:stringify(w.value)] from Weight w where w.model = name));
+
+create function w(charstring m, charstring l, array of f32 v) -> integer
+as insert into Weight values(m, l, v);
+
+create function import_weights(charstring model_name) -> object
+as select w(model_name, layer, cast(json:unstringify(value)as array of f32)) from Charstring layer, Charstring value
+where [layer,value] in csv:file_stream(models:folder('fuel_efficiency') + 'weights/' + model_name +'.csv');
+
+create function w(charstring m, charstring l) -> Bag of Array of f32
+as select w.value from Weight w where w.model = m and w.layer = l;
+
+

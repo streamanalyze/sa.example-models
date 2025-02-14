@@ -1,3 +1,12 @@
+# SA Engine
+bin
+docs
+logs
+temp
+tls
+federations
+SA/models/development
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

@@ -1,0 +1,42 @@
+# Regression with OSQL NN module
+
+Fuel prediction using regression and the Auto MPG dataset is described in 
+this [Tensorflow tutorial](https://www.tensorflow.org/tutorials/keras/regression).
+Refer to this tutorial for a walk-through of the contained ML concepts.
+
+This model shows an example of a setup where tensorflow models are replicated with OSQL models.
+The models are trained and inferred in tensorflow through SA Engine.
+The model weights are read from python, and used to infer the OSQL models.
+
+The OSQL models can be inferred on edges that dont have python.
+To tranfer the weights from the machine where tensorflow training is done 
+to the edge where inference with OSQL is run, they can be exported to files that are deployed with the model.
+
+* master.osql loads everything needed to infer the models on the edge
+  * inference.osql contain the models in OSQL
+  * weights.osql store the weights in SQL tables and files
+
+* usage.osql shows how to execute the training in python and transfer the weights. 
+It is recommended to step through this file to learn about this model.
+
+  * dataset.py contains functions to download the data, clean it and extract training data
+  * dataset.osql contain foreign function wrappers for dataset.py
+
+  * py_regression.py trains different examples of regression models
+  * py_regression.osql contain foreign function wrappers for py_regression.py 
+
+## Environment
+
+This model has been tested using tensorflow 2.13.0 and numpy 1.24.3. 
+It was tested on Windows, but should run on any platform with python integration and the packages above.  
+
+There is an environment file that can be used. In this repo folder, `sa.example-models`, run the following commands:
+
+```
+cd anaconda
+conda env create --file environment.yml
+cd ..
+conda activate sa-nn
+pip install tensorflow==2.17.1
+code .
+```
