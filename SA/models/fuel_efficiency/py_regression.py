@@ -4,26 +4,7 @@ from tensorflow import keras # need to open vs code from conda environment
 from tensorflow.keras import layers
 import io
 
-def get_model_summary(model, include_weights):
-    stream = io.StringIO()
-    model.summary(print_fn=lambda x: stream.write(x + '\n'))
-    summary_string = stream.getvalue()
-    stream.close()
-    if include_weights == True:
-         for layer in model.layers:
-               summary_string += "Layer: " + layer.name + "\n"
-               summary_string += "   weights: " + str(layer.get_weights()[0]) + "\n"
-               summary_string += "   biases: " + str(layer.get_weights()[1]) + "\n"
-    return summary_string
-
-def infer(model, data):
-   return model.predict(data)
-
-def get_weights(model, layer):
-   return np.array(model.get_layer(layer).get_weights()[0])
-
-def get_bias(model, layer):
-   return np.array(model.get_layer(layer).get_weights()[1])
+# Setting up models with layers and training choices
 
 def train_one_var_model(data, labels):
     normalizer = layers.Normalization(input_shape=[1,], axis=None)
@@ -92,3 +73,27 @@ def train_dnn_model(data, labels):
          validation_split = 0.2)
     
     return model
+
+# Functions working on the models
+
+def get_model_summary(model, include_weights):
+    stream = io.StringIO()
+    model.summary(print_fn=lambda x: stream.write(x + '\n'))
+    summary_string = stream.getvalue()
+    stream.close()
+    if include_weights == True:
+         for layer in model.layers:
+               summary_string += "Layer: " + layer.name + "\n"
+               summary_string += "   weights: " + str(layer.get_weights()[0]) + "\n"
+               summary_string += "   biases: " + str(layer.get_weights()[1]) + "\n"
+    return summary_string
+
+def infer(model, data):
+   return model.predict(data)
+
+def get_weights(model, layer):
+   return np.array(model.get_layer(layer).get_weights()[0])
+
+def get_bias(model, layer):
+   return np.array(model.get_layer(layer).get_weights()[1])
+
